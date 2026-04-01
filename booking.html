@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>授業予約システム</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --p900:#1e0a38;--p800:#32126a;--p700:#4a1d96;--p600:#6d28d9;--p500:#7c3aed;
+    --p400:#a78bfa;--p300:#c4b5fd;--p200:#ddd6fe;--p100:#ede9fe;--p50:#f5f3ff;
+    --ink:#1a1025;--ink2:#4c3a6e;--ink3:#8b7aaa;
+    --bg:#fdfcff;--bdr:rgba(109,40,217,.13);--bdrf:rgba(109,40,217,.28);
+    --ok:#166534;--okbg:#dcfce7;--err:#991b1b;--errbg:#fef2f2;
+    --warn:#78350f;--warnbg:#fffbeb;
+    --r:6px;--rlg:14px;
+    --sh:0 1px 3px rgba(60,20,120,.06),0 4px 20px rgba(60,20,120,.05);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--p50);color:var(--ink);
+       min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 16px 80px}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(circle at 15% 15%,rgba(109,40,217,.07),transparent 55%),
+               radial-gradient(circle at 85% 85%,rgba(124,58,237,.05),transparent 55%)}
+  .hd{text-align:center;margin-bottom:36px;position:relative;z-index:1}
+  .hd-ey{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--p500);font-weight:500;margin-bottom:8px}
+  .hd-ti{font-family:'Noto Serif JP',serif;font-size:30px;font-weight:700;color:var(--p800);line-height:1.3;margin-bottom:6px}
+  .hd-sb{font-size:13px;color:var(--ink3);font-weight:300}
+  .prog{display:flex;align-items:center;margin-bottom:28px;position:relative;z-index:1}
+  .pd{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:500;border:1.5px solid var(--bdr);background:var(--bg);color:var(--ink3);transition:all .3s;flex-shrink:0}
+  .pd.on{border-color:var(--p500);background:var(--p500);color:#fff}
+  .pd.dn{border-color:var(--p300);background:var(--p100);color:var(--p600)}
+  .pd.dn .n{display:none}.pd.dn::after{content:'✓';font-size:12px;color:var(--p600)}
+  .pl{font-size:11px;color:var(--ink3);margin:0 7px;white-space:nowrap;transition:color .3s}
+  .pl.on{color:var(--p600);font-weight:500}
+  .pli{width:40px;height:1px;background:var(--bdr);flex-shrink:0}
+  .card{width:100%;max-width:520px;background:var(--bg);border:1px solid var(--bdr);
+        border-radius:var(--rlg);box-shadow:var(--sh);overflow:hidden;position:relative;z-index:1;
+        animation:fu .28s ease}
+  .card.wide{max-width:640px}
+  @keyframes fu{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  .tb{height:3px;background:linear-gradient(90deg,var(--p700),var(--p400))}
+  .cb{padding:30px 34px 34px}
+  .fr{margin-bottom:18px}
+  .fl{display:block;font-size:11px;font-weight:500;letter-spacing:.07em;color:var(--ink2);margin-bottom:5px}
+  .rq{color:var(--p500);margin-left:2px}
+  input[type=text],input[type=email],textarea,select{
+    width:100%;padding:10px 12px;border:1px solid var(--bdrf);border-radius:var(--r);
+    background:var(--p50);font-family:'Noto Sans JP',sans-serif;font-size:14px;color:var(--ink);
+    outline:none;transition:border-color .2s,box-shadow .2s,background .2s;appearance:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--p500);box-shadow:0 0 0 3px rgba(109,40,217,.1);background:#fff}
+  .ef{border-color:var(--err)!important}
+  .fe{font-size:11px;color:var(--err);margin-top:4px}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237c3aed' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+         background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+  textarea{resize:vertical;min-height:78px;line-height:1.7}
+  .btnp{width:100%;padding:12px;background:var(--p700);color:#fff;border:none;border-radius:var(--r);
+        font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:500;cursor:pointer;
+        transition:background .2s,transform .15s,box-shadow .2s;margin-top:6px}
+  .btnp:hover{background:var(--p800);transform:translateY(-1px);box-shadow:0 4px 16px rgba(100,30,200,.2)}
+  .btnp:active{transform:none}.btnp:disabled{background:var(--ink3);cursor:not-allowed;transform:none;box-shadow:none}
+  .btns{padding:10px 16px;background:transparent;border:1px solid var(--bdrf);color:var(--ink2);
+        border-radius:var(--r);font-family:'Noto Sans JP',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
+  .btns:hover{border-color:var(--p400);color:var(--p600);background:var(--p100)}
+  .cfgbtn{position:fixed;bottom:18px;right:18px;width:38px;height:38px;border-radius:50%;
+          background:var(--bg);border:1px solid var(--bdrf);cursor:pointer;font-size:16px;
+          display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);
+          transition:all .2s;z-index:100;color:var(--ink3)}
+  .cfgbtn:hover{border-color:var(--p400);color:var(--p600)}
+  .bhd{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--bdr)}
+  .bav{width:44px;height:44px;border-radius:50%;background:var(--p200);color:var(--p800);
+       display:flex;align-items:center;justify-content:center;font-family:'Noto Serif JP',serif;
+       font-size:15px;font-weight:700;flex-shrink:0}
+  .bnm{font-family:'Noto Serif JP',serif;font-size:17px;font-weight:700;color:var(--p900)}
+  .bsb{font-size:12px;color:var(--ink3);margin-top:2px}
+  .ipill{display:inline-flex;align-items:center;gap:5px;background:var(--p100);color:var(--p700);
+         border-radius:20px;padding:4px 11px;font-size:11px;font-weight:500;margin-bottom:18px;border:1px solid var(--p200)}
+  .wnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .wlbl{font-family:'Noto Serif JP',serif;font-size:14px;font-weight:500;color:var(--p900)}
+  .nav{width:28px;height:28px;border-radius:50%;border:1px solid var(--bdrf);background:transparent;
+       cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink2);font-size:14px;transition:all .2s}
+  .nav:hover{border-color:var(--p400);color:var(--p600);background:var(--p100)}.nav:disabled{opacity:.35;cursor:not-allowed}
+  .cgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .ccol{display:flex;flex-direction:column;gap:3px}
+  .cdh{text-align:center;font-size:10px;font-weight:500;letter-spacing:.05em;color:var(--ink3);padding:4px 0}
+  .cdd{text-align:center;font-size:11px;font-weight:500;color:var(--ink2);padding:2px 0 5px}
+  .cdd.today{color:var(--p500)}
+  .slot{display:block;width:100%;padding:6px 2px;text-align:center;border:1px solid var(--bdrf);
+        border-radius:4px;background:var(--p50);font-family:'Noto Sans JP',sans-serif;font-size:11px;
+        color:var(--ink2);cursor:pointer;transition:all .18s;line-height:1.35}
+  .slot:hover{border-color:var(--p500);color:var(--p700);background:var(--p100)}
+  .slot.sel{border-color:var(--p600);background:var(--p600);color:#fff}
+  .slot.past{opacity:.35;cursor:not-allowed;pointer-events:none}
+  .nos{font-size:10px;color:var(--ink3);text-align:center;padding:7px 2px}
+  .ld{text-align:center;padding:26px 0;color:var(--ink3);font-size:13px}
+  .sp{width:16px;height:16px;border:2px solid var(--p200);border-top-color:var(--p500);
+      border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:7px;vertical-align:middle}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .selinfo{background:var(--p100);border:1px solid var(--p200);border-radius:var(--r);
+           padding:11px 13px;margin:14px 0 0;font-size:13px;color:var(--p800);display:none}
+  .selinfo.show{display:block}
+  .selinfo strong{font-weight:500;display:block;font-size:14px;margin-bottom:2px}
+  .brow{display:flex;gap:8px;margin-top:18px}
+  .calerr{text-align:center;padding:20px 14px;font-size:13px;color:var(--err);
+          background:var(--errbg);border-radius:var(--r);border:1px solid rgba(180,50,50,.18);line-height:1.7}
+  .calerr small{font-size:11px;color:var(--ink3);display:block;margin-top:5px}
+  .sw{text-align:center;padding:10px 0 4px}
+  .sico{width:58px;height:58px;border-radius:50%;background:var(--okbg);display:flex;align-items:center;
+        justify-content:center;font-size:24px;margin:0 auto 14px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+  @keyframes pop{from{transform:scale(0);opacity:0}}
+  .stitle{font-family:'Noto Serif JP',serif;font-size:21px;font-weight:700;color:var(--ok);margin-bottom:5px}
+  .ssub{font-size:13px;color:var(--ink3);margin-bottom:22px;line-height:1.7}
+  .sumbox{background:var(--p50);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;text-align:left}
+  .sumrow{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--bdr);font-size:13px}
+  .sumrow:last-child{border-bottom:none}
+  .sumlbl{color:var(--ink3);min-width:52px;flex-shrink:0}
+  .sumval{color:var(--ink);font-weight:500}
+  .ovl{position:fixed;inset:0;background:rgba(20,5,40,.6);backdrop-filter:blur(5px);
+       display:none;align-items:center;justify-content:center;z-index:200}
+  .ovl.show{display:flex}
+  .obox{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rlg);
+        padding:30px 32px;max-width:460px;width:92%;max-height:90vh;overflow-y:auto;
+        box-shadow:0 8px 40px rgba(60,10,120,.15);animation:fu .28s ease}
+  .otitle{font-family:'Noto Serif JP',serif;font-size:19px;font-weight:700;color:var(--p900);margin-bottom:4px}
+  .osub{font-size:12px;color:var(--ink3);margin-bottom:18px;line-height:1.6}
+  .nbox{border-radius:var(--r);padding:9px 12px;font-size:12px;line-height:1.65;margin-bottom:14px}
+  .nbox.warn{background:var(--warnbg);border:1px solid #fbbf24;color:var(--warn)}
+  .nbox.info{background:var(--p100);border:1px solid var(--p200);color:var(--p800)}
+  .tent{display:grid;grid-template-columns:1fr 1fr auto;gap:5px;margin-bottom:8px;align-items:start}
+  .tent input{font-size:12px;padding:7px 9px;margin-bottom:0}
+  .tcalid{grid-column:1/3;font-size:11px!important;padding:6px 9px!important;color:var(--ink2)}
+  .rmbtn{width:28px;height:28px;border-radius:var(--r);border:1px solid var(--bdrf);background:transparent;
+         cursor:pointer;color:var(--ink3);font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:2px}
+  .rmbtn:hover{border-color:#f87171;color:#b91c1c;background:#fef2f2}
+  .addlnk{font-size:12px;color:var(--p500);background:none;border:none;cursor:pointer;
+          text-decoration:underline;padding:0;font-family:'Noto Sans JP',sans-serif;display:block;margin-top:6px}
+</style>
+</head>
+<body>
+
+<button class="cfgbtn" onclick="openCfg()" title="設定">⚙</button>
+
+<!-- OVERLAY -->
+<div class="ovl" id="ovl">
+  <div class="obox">
+    <div class="tb" style="margin:-30px -32px 22px;border-radius:14px 14px 0 0"></div>
+    <div class="otitle">初期設定</div>
+    <div class="osub">Google API の認証情報と担当講師を登録してください。</div>
+    <div class="nbox warn">⚠️ <strong>Google Cloud Console</strong> で Calendar API を有効化し、OAuth クライアント ID と API キーを取得してください。</div>
+    <div class="fr">
+      <label class="fl">OAuth クライアント ID <span class="rq">*</span></label>
+      <input type="text" id="cfgCid" placeholder="xxxx.apps.googleusercontent.com">
+      <div class="fe" id="eCid"></div>
+    </div>
+    <div class="fr">
+      <label class="fl">API キー <span class="rq">*</span></label>
+      <input type="text" id="cfgKey" placeholder="AIzaSy...">
+      <div class="fe" id="eKey"></div>
+    </div>
+    <div class="fr">
+      <label class="fl">担当講師 <span class="rq">*</span></label>
+      <div id="tlist"></div>
+      <button class="addlnk" onclick="addRow()">＋ 講師を追加</button>
+      <div class="fe" id="eTch"></div>
+    </div>
+    <div class="nbox info">ℹ️ 「カレンダーID」は Google カレンダーの設定画面の「カレンダーの統合」から確認できます。空欄の場合はメールアドレスをそのまま使用します。</div>
+    <button class="btnp" onclick="saveCfg()">設定を保存して開始</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="hd">
+  <div class="hd-ey">予約システム</div>
+  <h1 class="hd-ti">授業の予約</h1>
+  <p class="hd-sb">情報を入力 · 講師を選択 · 日時を確定</p>
+</header>
+
+<div class="prog">
+  <div class="pd on" id="d1"><span class="n">1</span></div>
+  <div class="pl on" id="l1">情報入力</div>
+  <div class="pli"></div>
+  <div class="pd" id="d2"><span class="n">2</span></div>
+  <div class="pl" id="l2">日時選択</div>
+  <div class="pli"></div>
+  <div class="pd" id="d3"><span class="n">3</span></div>
+  <div class="pl" id="l3">予約完了</div>
+</div>
+
+<!-- PAGE 1 -->
+<div class="card" id="pg1">
+  <div class="tb"></div>
+  <div class="cb">
+    <div class="fr"><label class="fl" for="sName">お名前 <span class="rq">*</span></label><input type="text" id="sName" placeholder="山田 太郎"><div class="fe" id="eName"></div></div>
+    <div class="fr"><label class="fl" for="sEmail">メールアドレス <span class="rq">*</span></label><input type="email" id="sEmail" placeholder="taro@example.com"><div class="fe" id="eEmail"></div></div>
+    <div class="fr"><label class="fl" for="tSel">担当講師 <span class="rq">*</span></label><select id="tSel"><option value="">-- 講師を選択してください --</option></select><div class="fe" id="eTsel"></div></div>
+    <div class="fr"><label class="fl" for="sNote">備考（任意）</label><textarea id="sNote" placeholder="授業内容のご要望などをご記入ください…"></textarea></div>
+    <button class="btnp" onclick="goPg2()">次へ →</button>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="card wide" id="pg2" style="display:none">
+  <div class="tb"></div>
+  <div class="cb">
+    <div class="bhd">
+      <div class="bav" id="bav">—</div>
+      <div><div class="bnm" id="bnm">—</div><div class="bsb">ご希望の日時を選択してください</div></div>
+    </div>
+    <div class="ipill">📅 Google カレンダーの予約可能枠を表示中</div>
+    <div class="wnav">
+      <button class="nav" id="prevBtn" onclick="shiftW(-1)">‹</button>
+      <div class="wlbl" id="wlbl">—</div>
+      <button class="nav" onclick="shiftW(1)">›</button>
+    </div>
+    <div id="calArea"><div class="ld"><span class="sp"></span>カレンダーを読み込み中…</div></div>
+    <div class="selinfo" id="selinfo"><strong id="selinfoTxt">—</strong>この時間帯を選択しました。「予約を確定する」で完了します。</div>
+    <div class="brow">
+      <button class="btns" onclick="goPg1()">← 戻る</button>
+      <button class="btnp" id="confBtn" style="opacity:.4;pointer-events:none" onclick="doBook()">予約を確定する</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="card" id="pg3" style="display:none">
+  <div class="tb" style="background:linear-gradient(90deg,#166534,#22c55e)"></div>
+  <div class="cb">
+    <div class="sw">
+      <div class="sico">✓</div>
+      <div class="stitle">予約が完了しました</div>
+      <p class="ssub">確認メールをお送りしました。<br>講師にも予約内容が通知されます。</p>
+      <div class="sumbox" id="sumbox"></div>
+      <br><button class="btns" onclick="resetAll()">トップに戻る</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  ★ STEP 1: 講師情報をここに記入してください ★
+//  calendarId = Google カレンダーの「設定 > カレンダーの統合」に表示される
+//  「カレンダー ID」をコピーして貼り付けてください。
+//  例: 'tanaka@gmail.com' または 'abc123xyz@group.calendar.google.com'
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const TEACHERS = [
+  // 例（コメントアウトを外して使用）:
+  // { name: '田中先生', email: 'tanaka@gmail.com', calendarId: 'tanaka@gmail.com' },
+  // { name: '鈴木先生', email: 'suzuki@gmail.com', calendarId: 'abc123@group.calendar.google.com' },
+];
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  ★ STEP 2: API 認証情報をここに貼り付けてください ★
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const HC = {
+  clientId: '',  // ← OAuth クライアント ID
+  apiKey:   '',  // ← API キー
+};
+
+// ── 以下は変更不要 ──────────────────────────────
+let CFG={clientId:'',apiKey:'',teachers:[]};
+let gapiOk=false,gsiOk=false,tokenClient=null,token=null;
+let S={name:'',email:'',ti:null,note:'',slot:null,wo:0};
+
+function boot(){
+  if(HC.clientId&&HC.apiKey&&TEACHERS.length){
+    CFG={clientId:HC.clientId,apiKey:HC.apiKey,
+         teachers:TEACHERS.map(t=>({name:t.name,email:t.email,calId:t.calendarId||t.email}))};
+  } else {
+    const s=localStorage.getItem('lbcfg3');
+    if(s) try{CFG=JSON.parse(s)}catch(e){}
+  }
+  if(CFG.clientId&&CFG.apiKey&&CFG.teachers.length){fillSel();loadAPIs();}
+  else openCfg();
+}
+
+function openCfg(){
+  document.getElementById('cfgCid').value=CFG.clientId||'';
+  document.getElementById('cfgKey').value=CFG.apiKey||'';
+  const tl=document.getElementById('tlist');tl.innerHTML='';
+  const ts=CFG.teachers.length?CFG.teachers:[{name:'',email:'',calId:''}];
+  ts.forEach(t=>addRow(t.name,t.email,t.calId));
+  document.getElementById('ovl').classList.add('show');
+}
+
+function addRow(n='',e='',c=''){
+  const d=document.createElement('div');d.className='tent';
+  d.innerHTML=`<input type="text" placeholder="氏名" class="tn" value="${n}">
+               <input type="email" placeholder="メールアドレス" class="te" value="${e}">
+               <button class="rmbtn" onclick="if(document.querySelectorAll('.tent').length>1)this.closest('.tent').remove()">✕</button>
+               <input type="text" placeholder="カレンダー ID（設定画面からコピー）" class="tc tcalid" value="${c}">
+               <div></div><div></div>`;
+  document.getElementById('tlist').appendChild(d);
+}
+
+function saveCfg(){
+  const cid=document.getElementById('cfgCid').value.trim();
+  const key=document.getElementById('cfgKey').value.trim();
+  const rows=document.querySelectorAll('.tent');
+  const ts=[];
+  rows.forEach(r=>{
+    const n=r.querySelector('.tn').value.trim();
+    const e=r.querySelector('.te').value.trim();
+    const c=r.querySelector('.tc').value.trim();
+    if(n&&e)ts.push({name:n,email:e,calId:c||e});
+  });
+  ['eCid','eKey','eTch'].forEach(id=>document.getElementById(id).textContent='');
+  let ok=true;
+  if(!cid){document.getElementById('eCid').textContent='クライアント ID を入力してください';ok=false}
+  if(!key){document.getElementById('eKey').textContent='API キーを入力してください';ok=false}
+  if(!ts.length){document.getElementById('eTch').textContent='講師を 1 名以上登録してください';ok=false}
+  if(!ok)return;
+  CFG={clientId:cid,apiKey:key,teachers:ts};
+  localStorage.setItem('lbcfg3',JSON.stringify(CFG));
+  document.getElementById('ovl').classList.remove('show');
+  gapiOk=false;gsiOk=false;token=null;tokenClient=null;
+  fillSel();loadAPIs();
+}
+
+function fillSel(){
+  const sel=document.getElementById('tSel');
+  sel.innerHTML='<option value="">-- 講師を選択してください --</option>';
+  CFG.teachers.forEach((t,i)=>{const o=document.createElement('option');o.value=i;o.textContent=t.name;sel.appendChild(o);});
+}
+
+function loadAPIs(){
+  if(!document.getElementById('_gapi')){
+    const s=document.createElement('script');s.id='_gapi';s.src='https://apis.google.com/js/api.js';
+    s.onload=()=>{gapi.load('client',async()=>{
+      await gapi.client.init({apiKey:CFG.apiKey,discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest']});
+      gapiOk=true;});};
+    document.head.appendChild(s);
+  }
+  if(!document.getElementById('_gsi')){
+    const s=document.createElement('script');s.id='_gsi';s.src='https://accounts.google.com/gsi/client';
+    s.onload=()=>{
+      tokenClient=google.accounts.oauth2.initTokenClient({
+        client_id:CFG.clientId,
+        scope:'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly',
+        callback:(r)=>{
+          if(r.error){showCalErr('OAuth 認証に失敗しました',r.error);return;}
+          token=r.access_token;gapi.client.setToken({access_token:token});gsiOk=true;fetchSlots();
+        }
+      });gsiOk=true;
+    };
+    document.head.appendChild(s);
+  }
+}
+
+function reqAuth(){
+  if(token){fetchSlots();return;}
+  const w=setInterval(()=>{if(gapiOk&&gsiOk&&tokenClient){clearInterval(w);tokenClient.requestAccessToken({prompt:''});}},150);
+  setTimeout(()=>clearInterval(w),12000);
+}
+
+function goPg2(){
+  const name=document.getElementById('sName').value.trim();
+  const email=document.getElementById('sEmail').value.trim();
+  const ti=document.getElementById('tSel').value;
+  ['eName','eEmail','eTsel'].forEach(id=>document.getElementById(id).textContent='');
+  ['sName','sEmail','tSel'].forEach(id=>document.getElementById(id).classList.remove('ef'));
+  let ok=true;
+  if(!name){document.getElementById('eName').textContent='氏名を入力してください';document.getElementById('sName').classList.add('ef');ok=false}
+  if(!email||!/^[^@]+@[^@]+\.[^@]+$/.test(email)){document.getElementById('eEmail').textContent='有効なメールアドレスを入力してください';document.getElementById('sEmail').classList.add('ef');ok=false}
+  if(ti===''){document.getElementById('eTsel').textContent='講師を選択してください';document.getElementById('tSel').classList.add('ef');ok=false}
+  if(!ok)return;
+  S.name=name;S.email=email;S.ti=parseInt(ti);S.note=document.getElementById('sNote').value.trim();
+  S.wo=0;S.slot=null;
+  const t=CFG.teachers[S.ti];
+  document.getElementById('bav').textContent=t.name.replace(/\s+/g,'').slice(0,2);
+  document.getElementById('bnm').textContent=t.name;
+  document.getElementById('selinfo').classList.remove('show');
+  document.getElementById('confBtn').style.cssText='opacity:.4;pointer-events:none';
+  setProg(2);
+  document.getElementById('pg1').style.display='none';
+  document.getElementById('pg2').style.display='';
+  updW();
+  document.getElementById('calArea').innerHTML='<div class="ld"><span class="sp"></span>認証中…</div>';
+  reqAuth();
+}
+
+function goPg1(){setProg(1);document.getElementById('pg2').style.display='none';document.getElementById('pg1').style.display='';}
+function resetAll(){
+  S={name:'',email:'',ti:null,note:'',slot:null,wo:0};
+  ['sName','sEmail','sNote'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('tSel').value='';
+  setProg(1);document.getElementById('pg3').style.display='none';document.getElementById('pg1').style.display='';
+}
+function setProg(step){
+  [1,2,3].forEach(i=>{
+    const d=document.getElementById('d'+i),l=document.getElementById('l'+i);
+    d.classList.remove('on','dn');l.classList.remove('on');
+    if(i<step)d.classList.add('dn');else if(i===step){d.classList.add('on');l.classList.add('on');}
+  });
+}
+
+function getWeek(){
+  const t=new Date();t.setHours(0,0,0,0);
+  const mon=new Date(t);mon.setDate(t.getDate()-((t.getDay()+6)%7)+S.wo*7);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);sun.setHours(23,59,59,999);
+  return{start:mon,end:sun};
+}
+function updW(){
+  const{start:s,end:e}=getWeek();
+  const f=d=>`${d.getMonth()+1}月${d.getDate()}日`;
+  document.getElementById('wlbl').textContent=`${s.getFullYear()}年 ${f(s)}〜${f(e)}`;
+  document.getElementById('prevBtn').disabled=S.wo<=0;
+}
+function shiftW(d){
+  if(d<0&&S.wo<=0)return;
+  S.wo+=d;S.slot=null;
+  document.getElementById('selinfo').classList.remove('show');
+  document.getElementById('confBtn').style.cssText='opacity:.4;pointer-events:none';
+  updW();fetchSlots();
+}
+function pad(n){return String(n).padStart(2,'0')}
+
+async function fetchSlots(){
+  if(!gapiOk||!token){document.getElementById('calArea').innerHTML='<div class="ld"><span class="sp"></span>読み込み中…</div>';return;}
+  document.getElementById('calArea').innerHTML='<div class="ld"><span class="sp"></span>予約可能時間を取得中…</div>';
+  const t=CFG.teachers[S.ti];
+  const calId=t.calId||t.email;
+  const{start,end}=getWeek();
+  try{
+    const resp=await gapi.client.calendar.events.list({
+      calendarId:calId,timeMin:start.toISOString(),timeMax:end.toISOString(),
+      singleEvents:true,orderBy:'startTime',maxResults:500,showDeleted:false
+    });
+    const all=resp.result.items||[];
+    const slots=all.filter(ev=>{
+      if(ev.status==='cancelled')return false;
+      if(!ev.start||!ev.start.dateTime)return false;
+      const booked=(ev.attendees||[]).filter(a=>a.email!==calId&&a.email!==t.email&&a.organizer!==true);
+      if(booked.length>0&&booked.every(a=>a.responseStatus==='accepted'||a.responseStatus==='tentative'))return false;
+      return true;
+    });
+    renderCal(slots,start);
+  }catch(err){
+    console.error(err);
+    let msg='カレンダーの取得に失敗しました',hint='';
+    if(err.status===403){msg='アクセス権限がありません（403）';hint='カレンダーIDが正しいか確認してください。カレンダーの公開設定または共有設定が必要です。';}
+    else if(err.status===404){msg='カレンダーが見つかりません（404）';hint='カレンダーID「'+calId+'」を確認してください。';}
+    else if(err.status===401){msg='認証の有効期限が切れました（401）';hint='ページを再読み込みして再認証してください。';token=null;}
+    else hint=err.message||JSON.stringify(err);
+    showCalErr(msg,hint);
+  }
+}
+
+function showCalErr(msg,hint){
+  document.getElementById('calArea').innerHTML=
+    `<div class="calerr"><strong>${msg}</strong><small>${hint}</small>
+     <br><button class="btns" style="font-size:12px;padding:7px 14px;margin-top:10px" onclick="fetchSlots()">再試行</button></div>`;
+}
+
+function renderCal(evs,ws){
+  const days=['月','火','水','木','金','土','日'];
+  const now=new Date();
+  let h='<div class="cgrid">';
+  for(let d=0;d<7;d++){
+    const day=new Date(ws);day.setDate(ws.getDate()+d);
+    const isT=day.toDateString()===now.toDateString();
+    const isP=day<now&&!isT;
+    const ds=evs.filter(ev=>new Date(ev.start.dateTime).toDateString()===day.toDateString());
+    h+=`<div class="ccol"><div class="cdh">${days[d]}</div><div class="cdd${isT?' today':''}">${day.getDate()}</div>`;
+    if(isP&&!ds.length)h+='<div class="nos">—</div>';
+    else if(!ds.length)h+='<div class="nos">空き<br>なし</div>';
+    else ds.forEach(ev=>{
+      const st=new Date(ev.start.dateTime),en=new Date(ev.end.dateTime);
+      const ts=`${pad(st.getHours())}:${pad(st.getMinutes())}`;
+      const te=`${pad(en.getHours())}:${pad(en.getMinutes())}`;
+      const m=st.getMonth()+1,dd=st.getDate();
+      h+=`<button class="slot${en<now?' past':''}"
+        data-id="${ev.id}" data-s="${ev.start.dateTime}" data-e="${ev.end.dateTime}"
+        data-ttl="${encodeURIComponent(ev.summary||'授業')}"
+        data-m="${m}" data-d="${dd}" data-ts="${ts}" data-te="${te}"
+        onclick="pickSlot(this)">${ts}<br><span style="font-size:10px;opacity:.75">${te}</span></button>`;
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+  document.getElementById('calArea').innerHTML=h;
+}
+
+function pickSlot(btn){
+  document.querySelectorAll('.slot').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  S.slot={id:btn.dataset.id,start:btn.dataset.s,end:btn.dataset.e,title:decodeURIComponent(btn.dataset.ttl)};
+  const si=document.getElementById('selinfo');si.classList.add('show');
+  document.getElementById('selinfoTxt').textContent=`${btn.dataset.m}月${btn.dataset.d}日（${btn.dataset.ts}〜${btn.dataset.te}）`;
+  document.getElementById('confBtn').style.cssText='opacity:1;pointer-events:auto';
+}
+
+async function doBook(){
+  if(!S.slot)return;
+  const btn=document.getElementById('confBtn');
+  btn.disabled=true;btn.textContent='予約処理中…';
+  const t=CFG.teachers[S.ti];
+  const calId=t.calId||t.email;
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const ev={
+    summary:`【授業予約】${S.name} 様`,
+    description:`生徒氏名：${S.name}\nメール：${S.email}\n備考：${S.note||'なし'}`,
+    start:{dateTime:S.slot.start,timeZone:tz},
+    end:{dateTime:S.slot.end,timeZone:tz},
+    attendees:[
+      {email:S.email,displayName:S.name,responseStatus:'accepted'},
+      {email:t.email,displayName:t.name,organizer:true}
+    ],
+    reminders:{useDefault:false,overrides:[{method:'email',minutes:60},{method:'popup',minutes:15}]}
+  };
+  try{
+    await gapi.client.calendar.events.insert({calendarId:calId,resource:ev,sendUpdates:'all',sendNotifications:true});
+    showSuccess(t);
+  }catch(err){
+    console.error(err);
+    let msg='予約に失敗しました。';
+    if(err.status===403)msg='書き込み権限がありません（403）。カレンダーIDと共有設定を確認してください。';
+    if(err.status===409)msg='この時間帯はすでに予約済みです。別の時間を選択してください。';
+    alert(msg);btn.disabled=false;btn.textContent='予約を確定する';
+  }
+}
+
+function showSuccess(t){
+  const s=new Date(S.slot.start),e=new Date(S.slot.end);
+  const fd=`${s.getFullYear()}年${s.getMonth()+1}月${s.getDate()}日`;
+  const ft=`${pad(s.getHours())}:${pad(s.getMinutes())} 〜 ${pad(e.getHours())}:${pad(e.getMinutes())}`;
+  setProg(3);
+  document.getElementById('pg2').style.display='none';
+  document.getElementById('pg3').style.display='';
+  document.getElementById('sumbox').innerHTML=`
+    <div class="sumrow"><span class="sumlbl">お名前</span><span class="sumval">${S.name}</span></div>
+    <div class="sumrow"><span class="sumlbl">メール</span><span class="sumval">${S.email}</span></div>
+    <div class="sumrow"><span class="sumlbl">講師</span><span class="sumval">${t.name}</span></div>
+    <div class="sumrow"><span class="sumlbl">日付</span><span class="sumval">${fd}</span></div>
+    <div class="sumrow"><span class="sumlbl">時間</span><span class="sumval">${ft}</span></div>
+    ${S.note?`<div class="sumrow"><span class="sumlbl">備考</span><span class="sumval">${S.note}</span></div>`:''}`;
+}
+
+boot();
+</script>
+</body>
+</html>
