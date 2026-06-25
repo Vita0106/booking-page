@@ -680,7 +680,7 @@ function validateSection(n) {
     const purpose = document.getElementById('q_purpose').value.trim();
     const goal    = document.getElementById('q_goal').value.trim();
 
-    // 新增拼音校验
+    // 拼音必选校验
     if (!pinyin) { show('err_pinyin', true); ok = false; } else show('err_pinyin', false);
 
     if (!level)          { show('err_level', true);   ok = false; } else show('err_level', false);
@@ -767,11 +767,3 @@ function collectData() {
     const val = el.value;
     if (val === 'その他') {
       const otherMap = { q_lang: 'lang_other', q_skill: 'skill_other' };
-      const otherId = otherMap[name];
-      if (otherId) return 'その他：' + (get(otherId) || '');
-    }
-    return val;
-  };
-  const getChecks = name => {
-    return [...document.querySelectorAll(`input[name=${name}]:checked`)]
-      .map(el => el.value).
