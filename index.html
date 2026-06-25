@@ -447,6 +447,29 @@ body::before {
       <div class="q-err" id="err_level">現在のレベルを選択してください</div>
     </div>
 
+    <!-- ピンイン質問追加 -->
+    <div class="q-block">
+      <div class="q-label">ピンイン（拼音）を勉強したことがありますか <span class="q-req">*</span></div>
+      <div class="options-grid cols2">
+        <label class="opt-label">
+          <input type="radio" name="q_pinyin" value="完全未学習">
+          <div class="opt-mark"></div>
+          <div class="opt-text">完全未学習</div>
+        </label>
+        <label class="opt-label">
+          <input type="radio" name="q_pinyin" value="一部学習済み">
+          <div class="opt-mark"></div>
+          <div class="opt-text">一部学習済み</div>
+        </label>
+        <label class="opt-label">
+          <input type="radio" name="q_pinyin" value="全て学習済み">
+          <div class="opt-mark"></div>
+          <div class="opt-text">全て学習済み</div>
+        </label>
+      </div>
+      <div class="q-err" id="err_pinyin">ピンインの学習経験を選択してください</div>
+    </div>
+    
     <!-- 学習歴 -->
     <div class="q-block">
       <div class="q-label">これまでの学習歴 <span class="q-req">*</span></div>
