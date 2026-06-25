@@ -433,6 +433,34 @@ body::before {
       <input type="text" class="q-input" id="q_hsk" placeholder="例：HSK4級・2022年合格 / まだ受けていません">
     </div>
 
+    <!-- 新增：是否学习过拼音 -->
+    <div class="q-block">
+      <div class="q-label">ピンイン（拼音）を勉強したことがありますか <span class="q-req">*</span></div>
+      <div class="options-grid cols2">
+        <label class="opt-label">
+          <input type="radio" name="q_pinyin" value="はい、一通り習得済み">
+          <div class="opt-mark"></div>
+          <div class="opt-text">はい、一通り習得済み</div>
+        </label>
+        <label class="opt-label">
+          <input type="radio" name="q_pinyin" value="少しだけ勉強した">
+          <div class="opt-mark"></div>
+          <div class="opt-text">少しだけ勉強した</div>
+        </label>
+        <label class="opt-label">
+          <input type="radio" name="q_pinyin" value="聞いたことはあるが学習なし">
+          <div class="opt-mark"></div>
+          <div class="opt-text">聞いたことはあるが学習なし</div>
+        </label>
+        <label class="opt-label">
+          <input type="radio" name="q_pinyin" value="ピンインを知らない">
+          <div class="opt-mark"></div>
+          <div class="opt-text">ピンインを知らない</div>
+        </label>
+      </div>
+      <div class="q-err" id="err_pinyin">ピンインの学習経験を選択してください</div>
+    </div>
+
     <!-- レベル -->
     <div class="q-block">
       <div class="q-label">今の中国語レベル <span class="q-req">*</span></div>
@@ -645,11 +673,16 @@ function validateSection(n) {
     if (!age)    { show('err_age', true);    ok = false; } else show('err_age', false);
   }
   if (n === 2) {
+    const pinyin = document.querySelector('input[name=q_pinyin]:checked');
     const level   = document.querySelector('input[name=q_level]:checked');
     const history = document.querySelectorAll('input[name=q_history]:checked');
     const skill   = document.querySelectorAll('input[name=q_skill]:checked');
     const purpose = document.getElementById('q_purpose').value.trim();
     const goal    = document.getElementById('q_goal').value.trim();
+
+    // 新增拼音校验
+    if (!pinyin) { show('err_pinyin', true); ok = false; } else show('err_pinyin', false);
+
     if (!level)          { show('err_level', true);   ok = false; } else show('err_level', false);
     if (!history.length) { show('err_history', true); ok = false; } else show('err_history', false);
     if (!skill.length)   { show('err_skill', true);   ok = false; } else show('err_skill', false);
@@ -741,45 +774,4 @@ function collectData() {
   };
   const getChecks = name => {
     return [...document.querySelectorAll(`input[name=${name}]:checked`)]
-      .map(el => el.value).join('、');
-  };
-
-  return {
-    name:     get('q_name').trim(),
-    email:    get('q_email').trim(),
-    gender:   getRadio('q_gender'),
-    age:      getRadio('q_age'),
-    hsk:      get('q_hsk').trim() || 'なし',
-    level:    getRadio('q_level'),
-    history:  getChecks('q_history'),
-    skill:    getChecks('q_skill'),
-    purpose:  get('q_purpose').trim(),
-    goal:     get('q_goal').trim(),
-    lang:     getRadio('q_lang'),
-    pace:     getRadio('q_pace'),
-    teacher:  getRadio('q_teacher'),
-    expect:   get('q_expect').trim(),
-  };
-}
-
-// ── Submit ────────────────────────────────────────────────────
-function submitForm() {
-  if (!validateSection(3)) return;
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-  btn.textContent = '送信中…';
-  const data = collectData();
-  // Store in sessionStorage for booking page to pick up
-  sessionStorage.setItem('mandstar_form', JSON.stringify(data));
-  // Navigate to booking page
-  setTimeout(() => {
-    window.location.href = 'booking.html';
-  }, 400);
-}
-
-// ── Init ──────────────────────────────────────────────────────
-updateProgress(1);
-initAllOptions();
-</script>
-</body>
-</html>
+      .map(el => el.value).
