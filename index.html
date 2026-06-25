@@ -28,7 +28,6 @@ body {
   overflow-x:hidden;
 }
 
-/* ── Background decoration ── */
 body::before {
   content:'';
   position:fixed; inset:0; z-index:0; pointer-events:none;
@@ -38,7 +37,6 @@ body::before {
     radial-gradient(ellipse 40% 40% at 50% 50%, rgba(196,181,253,.04) 0%, transparent 70%);
 }
 
-/* ── Header / Hero ── */
 .hero {
   position:relative; z-index:1;
   text-align:center;
@@ -78,7 +76,6 @@ body::before {
 }
 .hero-meta-dot { width:4px; height:4px; border-radius:50%; background:var(--p400); }
 
-/* ── Progress bar ── */
 .progress-wrap {
   position:sticky; top:0; z-index:50;
   background:rgba(250,248,255,.85); backdrop-filter:blur(12px);
@@ -104,14 +101,12 @@ body::before {
 .psd.done { background:var(--p400); }
 .psd.active { background:var(--p600); transform:scale(1.25); }
 
-/* ── Form wrap ── */
 .form-wrap {
   position:relative; z-index:1;
   max-width:720px; margin:0 auto;
   padding:0 20px 80px;
 }
 
-/* ── Section ── */
 .section {
   background:var(--white); border:1px solid rgba(196,181,253,.3);
   border-radius:var(--rxl); box-shadow:var(--sh);
@@ -141,7 +136,6 @@ body::before {
 }
 .section-sub { font-size:12px; color:var(--ink3); margin-top:3px; }
 
-/* ── Questions ── */
 .q-block { margin-bottom:28px; }
 .q-block:last-child { margin-bottom:0; }
 .q-label {
@@ -153,7 +147,6 @@ body::before {
 .q-err { font-size:11px; color:#dc2626; margin-top:6px; display:none; }
 .q-err.show { display:block; }
 
-/* ── Text input / textarea ── */
 .q-input, .q-textarea {
   width:100%; padding:12px 14px;
   border:1.5px solid var(--p200); border-radius:var(--r);
@@ -169,7 +162,6 @@ body::before {
 .q-input.err, .q-textarea.err { border-color:#dc2626; }
 .q-textarea { resize:vertical; min-height:88px; line-height:1.75; }
 
-/* ── Radio / checkbox options ── */
 .options-grid {
   display:grid; gap:8px;
   grid-template-columns:1fr;
@@ -220,7 +212,6 @@ body::before {
 .opt-other-input:focus { border-color:var(--p500); box-shadow:0 0 0 2px rgba(124,58,237,.08); }
 .opt-label.selected .opt-other-input { display:block; }
 
-/* ── Teacher cards ── */
 .teacher-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .teacher-card {
   border:1.5px solid var(--p200); border-radius:var(--rlg);
@@ -258,7 +249,6 @@ body::before {
 }
 .teacher-card.selected .tc-check { display:flex; }
 
-/* ── Navigation buttons ── */
 .nav-row {
   display:flex; justify-content:space-between; align-items:center;
   margin-top:32px; padding-top:24px;
@@ -286,7 +276,6 @@ body::before {
 .btn-arrow { font-size:16px; transition:transform .2s; }
 .btn-next:hover .btn-arrow { transform:translateX(3px); }
 
-/* ── Submit button ── */
 .btn-submit {
   width:100%; padding:16px;
   border:none; border-radius:var(--r);
@@ -299,13 +288,11 @@ body::before {
 .btn-submit:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(109,40,217,.4); }
 .btn-submit:disabled { background:var(--ink4); box-shadow:none; cursor:not-allowed; transform:none; }
 
-/* ── Animations ── */
 @keyframes fadeDown {
   from { opacity:0; transform:translateY(-12px); }
   to   { opacity:1; transform:translateY(0); }
 }
 
-/* ── Responsive ── */
 @media (max-width:600px) {
   .section { padding:24px 20px; }
   .options-grid.cols2 { grid-template-columns:1fr; }
@@ -317,7 +304,6 @@ body::before {
 </head>
 <body>
 
-<!-- HERO -->
 <div class="hero">
   <div class="hero-badge">✦ MandStar Chinese</div>
   <h1 class="hero-title">中国語レッスン<span>お申し込み</span>フォーム</h1>
@@ -334,7 +320,6 @@ body::before {
   </div>
 </div>
 
-<!-- PROGRESS -->
 <div class="progress-wrap">
   <div class="progress-inner">
     <div class="progress-step-dots" id="stepDots"></div>
@@ -345,10 +330,8 @@ body::before {
   </div>
 </div>
 
-<!-- FORM -->
 <div class="form-wrap">
 
-  <!-- ══ SECTION 1: 基本情報 ══ -->
   <div class="section active" id="sec1">
     <div class="section-header">
       <div class="section-num">1</div>
@@ -358,7 +341,6 @@ body::before {
       </div>
     </div>
 
-    <!-- 名前 -->
     <div class="q-block">
       <div class="q-label">お名前（ニックネーム可） <span class="q-req">*</span></div>
       <div class="q-hint">読み方も一緒に教えていただけると助かります（例：田中花子 / タナカハナコ）</div>
@@ -366,14 +348,12 @@ body::before {
       <div class="q-err" id="err_name">お名前をご入力ください</div>
     </div>
 
-    <!-- メール -->
     <div class="q-block">
       <div class="q-label">メールアドレス <span class="q-req">*</span></div>
       <input type="email" class="q-input" id="q_email" placeholder="例：example@email.com">
       <div class="q-err" id="err_email">有効なメールアドレスをご入力ください</div>
     </div>
 
-    <!-- 性別 -->
     <div class="q-block">
       <div class="q-label">性別 <span class="q-req">*</span></div>
       <div class="options-grid cols3">
@@ -396,7 +376,6 @@ body::before {
       <div class="q-err" id="err_gender">性別を選択してください</div>
     </div>
 
-    <!-- 年齢 -->
     <div class="q-block">
       <div class="q-label">年齢 <span class="q-req">*</span></div>
       <div class="options-grid cols3">
@@ -416,7 +395,6 @@ body::before {
     </div>
   </div>
 
-  <!-- ══ SECTION 2: 中国語レッスンについて ══ -->
   <div class="section" id="sec2">
     <div class="section-header">
       <div class="section-num">2</div>
@@ -426,14 +404,13 @@ body::before {
       </div>
     </div>
 
-    <!-- HSK -->
     <div class="q-block">
       <div class="q-label">HSK 試験について</div>
       <div class="q-hint">受験経験がある方は、取得級・合格時期など教えてください。初心者の方は「なし」とご記入ください。</div>
       <input type="text" class="q-input" id="q_hsk" placeholder="例：HSK4級・2022年合格 / まだ受けていません">
     </div>
 
-    <!-- 新增：是否学习过拼音 -->
+    <!-- 拼音题目 完整可用 -->
     <div class="q-block">
       <div class="q-label">ピンイン（拼音）を勉強したことがありますか <span class="q-req">*</span></div>
       <div class="options-grid cols2">
@@ -461,7 +438,6 @@ body::before {
       <div class="q-err" id="err_pinyin">ピンインの学習経験を選択してください</div>
     </div>
 
-    <!-- レベル -->
     <div class="q-block">
       <div class="q-label">今の中国語レベル <span class="q-req">*</span></div>
       <div class="options-grid">
@@ -475,7 +451,6 @@ body::before {
       <div class="q-err" id="err_level">現在のレベルを選択してください</div>
     </div>
 
-    <!-- 学習歴 -->
     <div class="q-block">
       <div class="q-label">これまでの学習歴 <span class="q-req">*</span></div>
       <div class="options-grid cols2">
@@ -489,7 +464,6 @@ body::before {
       <div class="q-err" id="err_history">学習歴を選択してください</div>
     </div>
 
-    <!-- スキル -->
     <div class="q-block">
       <div class="q-label">特に強化したいスキル <span class="q-req">*</span></div>
       <div class="options-grid cols2">
@@ -512,14 +486,12 @@ body::before {
       <div class="q-err" id="err_skill">強化したいスキルを選択してください</div>
     </div>
 
-    <!-- 目的 -->
     <div class="q-block">
       <div class="q-label">中国語を学ぶ最大の目的は？ <span class="q-req">*</span></div>
       <textarea class="q-textarea" id="q_purpose" placeholder="例：仕事で中国のパートナーと直接話せるようになりたい / 中国への旅行をもっと楽しみたい"></textarea>
       <div class="q-err" id="err_purpose">目的をご記入ください</div>
     </div>
 
-    <!-- ゴール -->
     <div class="q-block">
       <div class="q-label">理想のゴール <span class="q-req">*</span></div>
       <div class="q-hint">3ヶ月後・半年後など、どんな状態になりたいか教えてください</div>
@@ -533,7 +505,6 @@ body::before {
     </div>
   </div>
 
-  <!-- ══ SECTION 3: 学習スタイル・希望 ══ -->
   <div class="section" id="sec3">
     <div class="section-header">
       <div class="section-num">3</div>
@@ -543,7 +514,6 @@ body::before {
       </div>
     </div>
 
-    <!-- レッスン中の言語 -->
     <div class="q-block">
       <div class="q-label">レッスン中、どんな風に話すのがいいですか <span class="q-req">*</span></div>
       <div class="options-grid">
@@ -562,7 +532,6 @@ body::before {
       <div class="q-err" id="err_lang">選択してください</div>
     </div>
 
-    <!-- 学習ペース -->
     <div class="q-block">
       <div class="q-label">希望学習ペース <span class="q-req">*</span></div>
       <div class="options-grid cols2">
@@ -574,7 +543,6 @@ body::before {
       <div class="q-err" id="err_pace">学習ペースを選択してください</div>
     </div>
 
-    <!-- 担当講師 -->
     <div class="q-block">
       <div class="q-label">担当講師 <span class="q-req">*</span></div>
       <div class="teacher-cards">
@@ -596,7 +564,6 @@ body::before {
       <div class="q-err" id="err_teacher">担当講師を選択してください</div>
     </div>
 
-    <!-- 期待すること -->
     <div class="q-block">
       <div class="q-label">先生に特に期待することはありますか？ <span class="q-req">*</span></div>
       <div class="q-hint">「間違いをしっかり直してほしい」「発音練習をたくさんしてほしい」など、遠慮なく教えてください</div>
@@ -612,14 +579,12 @@ body::before {
     </div>
   </div>
 
-</div><!-- /form-wrap -->
+</div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────
 let currentSection = 1;
 const TOTAL_SECTIONS = 3;
 
-// ── Progress ──────────────────────────────────────────────────
 function updateProgress(step) {
   const pct = ((step - 1) / TOTAL_SECTIONS) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
@@ -633,7 +598,6 @@ function updateProgress(step) {
   }
 }
 
-// ── Section navigation ────────────────────────────────────────
 function showSection(n) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('sec' + n).classList.add('active');
@@ -648,7 +612,6 @@ function goNext(from) {
 }
 function goBack(from) { showSection(from - 1); }
 
-// ── Validation ────────────────────────────────────────────────
 function validateSection(n) {
   let ok = true;
   const show = (id, show) => {
@@ -680,9 +643,7 @@ function validateSection(n) {
     const purpose = document.getElementById('q_purpose').value.trim();
     const goal    = document.getElementById('q_goal').value.trim();
 
-    // 拼音必选校验
     if (!pinyin) { show('err_pinyin', true); ok = false; } else show('err_pinyin', false);
-
     if (!level)          { show('err_level', true);   ok = false; } else show('err_level', false);
     if (!history.length) { show('err_history', true); ok = false; } else show('err_history', false);
     if (!skill.length)   { show('err_skill', true);   ok = false; } else show('err_skill', false);
@@ -705,26 +666,20 @@ function validateSection(n) {
   return ok;
 }
 
-// ── Option selection — all driven by change events ────────────
 function initAllOptions() {
-  // Radio buttons
   document.querySelectorAll('.opt-label input[type=radio]').forEach(inp => {
     inp.addEventListener('change', function() {
       const name = this.name;
-      // Deselect all in same group
       document.querySelectorAll(`input[name="${name}"]`).forEach(el => {
         el.closest('.opt-label').classList.remove('selected');
       });
-      // Select this one
       const label = this.closest('.opt-label');
       label.classList.add('selected');
-      // Focus other-input if present
       const other = label.querySelector('.opt-other-input');
       if (other) setTimeout(() => other.focus(), 50);
     });
   });
 
-  // Teacher cards (radio)
   document.querySelectorAll('.teacher-card input[type=radio]').forEach(inp => {
     inp.addEventListener('change', function() {
       document.querySelectorAll('.teacher-card').forEach(c => c.classList.remove('selected'));
@@ -732,7 +687,6 @@ function initAllOptions() {
     });
   });
 
-  // Checkboxes
   document.querySelectorAll('.opt-label.checkbox input[type=checkbox]').forEach(inp => {
     inp.addEventListener('change', function() {
       const label = this.closest('.opt-label');
@@ -746,24 +700,66 @@ function initAllOptions() {
     });
   });
 
-  // Prevent other-input clicks from propagating and toggling parent
   document.querySelectorAll('.opt-other-input').forEach(inp => {
     inp.addEventListener('click', e => e.stopPropagation());
     inp.addEventListener('mousedown', e => e.stopPropagation());
   });
 }
 
-// Keep these as no-ops for safety (onclick removed from HTML but just in case)
 function selectRadio() {}
 function toggleCheck() {}
 function selectTeacher() {}
 
-// ── Collect form data ─────────────────────────────────────────
 function collectData() {
   const get = id => (document.getElementById(id) || {}).value || '';
   const getRadio = name => {
-    const el = document.querySelector(`input[name=${name}]:checked`);
+    const el = document.querySelector(`input[name="${name}"]:checked`);
     if (!el) return '';
     const val = el.value;
-    if (val === 'その他') {
-      const otherMap = { q_lang: 'lang_other', q_skill: 'skill_other' };
+    const otherMap = { q_lang: 'lang_other', q_skill: 'skill_other' };
+    if (val === 'その他' && otherMap[name]) {
+      return 'その他：' + get(otherMap[name]);
+    }
+    return val;
+  };
+  const getChecks = name => {
+    return [...document.querySelectorAll(`input[name="${name}"]:checked`)]
+      .map(el => el.value).join('、');
+  };
+
+  return {
+    name: get('q_name').trim(),
+    email: get('q_email').trim(),
+    gender: getRadio('q_gender'),
+    age: getRadio('q_age'),
+    hsk: get('q_hsk').trim() || 'なし',
+    pinyin: getRadio('q_pinyin'),
+    level: getRadio('q_level'),
+    history: getChecks('q_history'),
+    skill: getChecks('q_skill'),
+    purpose: get('q_purpose').trim(),
+    goal: get('q_goal').trim(),
+    lang: getRadio('q_lang'),
+    pace: getRadio('q_pace'),
+    teacher: getRadio('q_teacher'),
+    expect: get('q_expect').trim(),
+  };
+}
+
+function submitForm() {
+  if (!validateSection(3)) return;
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '送信中…';
+  const data = collectData();
+  sessionStorage.setItem('mandstar_form', JSON.stringify(data));
+  setTimeout(() => {
+    window.location.href = 'booking.html';
+  }, 400);
+}
+
+updateProgress(1);
+initAllOptions();
+</script>
+</body>
+</html>
