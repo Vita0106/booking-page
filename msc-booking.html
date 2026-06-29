@@ -399,10 +399,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  ★ 管理者設定：ここに入力してください ★
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwJveokly6tFKrK_1KT2Ntz0KJANcQyuqLBKlRU5vC_h5X9aoD6PH0sZjDJ1Ne-hs2eeg/exec';  // Apps Script Web App URL
+const SCRIPT_URL    = '';  // ← Apps Script の Web App URL を貼り付け
 const TEACHERS_LIST = [
-  // { name: 'Vita先生',  email: 'xuyihan990106@gmail.com' },
-  // { name: 'Tong先生',  email: 'perachinese777@gmail.com' },
+  // ↓ コメントを外して、実際の講師名とGmailを入力してください
+  // 講師名は Code.gs の TEACHERS のキーと完全一致させること
+  { name: 'Vita先生', email: 'xuyihan990106@gmail.com' },  // ← Vita先生のGmailを入力
+  { name: 'Tong先生', email: 'perachinese777@gmail.com' },  // ← Tong先生のGmailを入力
 ];
 const AUTO_VALUE = 'システムにお任せ';
 
@@ -771,8 +773,8 @@ function sendViaForm(url, action, jsonData) {
       resolve();
     }, 5000);
 
+    console.log('Form submitting to:', url, 'action:', action, 'dataLen:', jsonData.length);
     form.submit();
-    console.log('Form submitted to:', url, 'action:', action);
   });
 }
 
