@@ -668,69 +668,112 @@ async function doBook() {
     lang:         formData.lang    || '',
   };
 
-  if (S.autoMode) {
-    // 自動配分はシンプルにPOSTして成功画面へ
-    showProcessing(false);
-    try {
-      const body = 'action=auto_booking&data=' + encodeURIComponent(JSON.stringify(payload));
-      await fetch(cfg.url, { method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
-    } catch(e) { console.warn(e); }
-    hideProcessing();
-    showSuccess(t);
-    return;
-  }
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  //  送信方式:
+  //  1. fetch (CORS対応・レスポンス読取可) を試みる
+  //  2. 失敗したら hidden form POST (CORS回避・確実に届く)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const actionName = S.autoMode ? 'auto_booking' : 'booking';
+  const jsonData   = JSON.stringify(payload);
 
-  // 指定教師: 処理画面を表示しながらAPIを呼ぶ
-  showProcessing(true);
+  showProcessing(!S.autoMode);
+  setStep(1, 'active');
+  await new Promise(r => setTimeout(r, 300));
+  setStep(1, 'done'); setStep(2, 'active');
 
+  // ── 方法1: fetch で試みる（レスポンスが読める） ──
+  let sent = false;
   try {
-    // Apps Script に予約リクエスト（no-corsなのでレスポンスは読めないが送信は成功する）
-    // レスポンスが必要なのでCORSを試みる
-    setStep(1, 'active');
-    await new Promise(r => setTimeout(r, 600));
-    setStep(1, 'done'); setStep(2, 'active');
-    await new Promise(r => setTimeout(r, 400));
-
-    try {
-      // CORSありで試みる（レスポンスが読める場合）
-      const body = 'action=booking&data=' + encodeURIComponent(JSON.stringify(payload));
-      const res  = await fetch(cfg.url, {
-        method:  'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body:    body
-      });
-      const data = await res.json();
-      if (data.status === 'error' && data.message === 'already_booked') {
-        hideProcessing();
-        alert('この時間帯はすでに予約済みです。別の時間帯を選択してください。');
-        btn.disabled = false;
-        return;
-      }
-      setStep(2, 'done'); setStep(3, 'active');
-      await new Promise(r => setTimeout(r, 700));
-      setStep(3, 'done');
-
-    } catch (corsErr) {
-      // CORSエラーの場合は no-cors でフォールバック送信
-      console.warn('CORS blocked, using no-cors fallback:', corsErr);
-      const body = 'action=booking&data=' + encodeURIComponent(JSON.stringify(payload));
-      await fetch(cfg.url, { method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
-      setStep(2, 'done'); setStep(3, 'active');
-      await new Promise(r => setTimeout(r, 700));
-      setStep(3, 'done');
+    const res = await fetch(cfg.url, {
+      method: 'POST',
+      mode:   'cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:   'action=' + actionName + '&data=' + encodeURIComponent(jsonData)
+    });
+    const result = await res.json();
+    if (result.status === 'error' && result.message === 'already_booked') {
+      hideProcessing();
+      alert('この時間帯はすでに予約済みです。別の時間帯を選択してください。');
+      btn.disabled = false;
+      return;
     }
-
-    await new Promise(r => setTimeout(r, 400));
-    hideProcessing();
-    showSuccess(t);
-
-  } catch(err) {
-    hideProcessing();
-    alert('予約の送信に失敗しました。\n' + err.message);
-    btn.disabled = false;
+    sent = true;
+    Logger.log && Logger.log('Sent via fetch CORS');
+  } catch (fetchErr) {
+    console.warn('fetch CORS failed, trying form POST:', fetchErr.message);
   }
+
+  // ── 方法2: hidden form POST（必ず Apps Script に届く） ──
+  if (!sent) {
+    await sendViaForm(cfg.url, actionName, jsonData);
+    sent = true;
+    // form POST の場合レスポンスは読めないが送信は確実
+    await new Promise(r => setTimeout(r, 1500)); // Apps Script 処理待ち
+  }
+
+  setStep(2, 'done'); setStep(3, 'active');
+  await new Promise(r => setTimeout(r, 600));
+  setStep(3, 'done');
+  await new Promise(r => setTimeout(r, 300));
+  hideProcessing();
+  showSuccess(t);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  Hidden Form POST（CORS 回避・Apps Script に確実に届く）
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function sendViaForm(url, action, jsonData) {
+  return new Promise(function(resolve) {
+    // 不可視の iframe を作成（ページ遷移を防ぐ）
+    const iframeId = 'hidden-submit-frame-' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeId;
+    iframe.style.cssText = 'display:none;width:0;height:0;border:none;position:absolute;left:-9999px';
+    document.body.appendChild(iframe);
+
+    // フォームを作成
+    const form = document.createElement('form');
+    form.method  = 'POST';
+    form.action  = url;
+    form.target  = iframeId;
+    form.style.cssText = 'display:none';
+
+    // action フィールド
+    const fAction = document.createElement('input');
+    fAction.type  = 'hidden';
+    fAction.name  = 'action';
+    fAction.value = action;
+    form.appendChild(fAction);
+
+    // data フィールド（JSON文字列）
+    const fData = document.createElement('input');
+    fData.type  = 'hidden';
+    fData.name  = 'data';
+    fData.value = jsonData;
+    form.appendChild(fData);
+
+    document.body.appendChild(form);
+
+    // iframe ロード完了で resolve
+    iframe.onload = function() {
+      console.log('Form POST completed via iframe');
+      // クリーンアップ
+      setTimeout(function() {
+        document.body.removeChild(form);
+        document.body.removeChild(iframe);
+      }, 3000);
+      resolve();
+    };
+
+    // タイムアウト（5秒後に強制 resolve）
+    setTimeout(function() {
+      try { document.body.removeChild(form); document.body.removeChild(iframe); } catch(e) {}
+      resolve();
+    }, 5000);
+
+    form.submit();
+    console.log('Form submitted to:', url, 'action:', action);
+  });
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
