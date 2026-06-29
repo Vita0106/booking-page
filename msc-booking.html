@@ -399,7 +399,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  ★ 管理者設定：ここに入力してください ★
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbz3fJM6mkvtinLUwrXRjjMC7xPQ5bkx9xxGMau57HsGfe-WBeda9dSU4AKh7V3aBjZ0jA/exec';  // ← Apps Script の Web App URL を貼り付け
+const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbxG6lQzLYGxH6iEwtlbeqwYkF6IFjYwHCAXCxffDJKSUhDQ7N82aCNpY0omCB7sFA-oow/exec';  // ← Apps Script の Web App URL を貼り付け
 const TEACHERS_LIST = [
   // ↓ コメントを外して、実際の講師名とGmailを入力してください
   // 講師名は Code.gs の TEACHERS のキーと完全一致させること
@@ -424,7 +424,15 @@ const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 function boot() {
   document.getElementById('tzTxt').textContent = userTz;
 
-  try { const r = sessionStorage.getItem('mandstar_form'); if (r) formData = JSON.parse(r); } catch(e) {}
+  try {
+    const r = sessionStorage.getItem('mandstar_form');
+    if (r) {
+      formData = JSON.parse(r);
+      console.log('[MandStar] formData loaded:', formData.name, '/', formData.email);
+    } else {
+      console.warn('[MandStar] sessionStorage: mandstar_form is empty');
+    }
+  } catch(e) { console.error('[MandStar] sessionStorage read error:', e); }
 
   if (!cfg.url || !cfg.teachers.length) {
     try { const s = localStorage.getItem(CFG_KEY); if (s) { const c = JSON.parse(s); if (c.url) cfg = c; } } catch(e) {}
@@ -676,6 +684,7 @@ async function doBook() {
   //  2. 失敗したら hidden form POST (CORS回避・確実に届く)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const actionName = S.autoMode ? 'auto_booking' : 'booking';
+  console.log('[MandStar] payload.studentEmail=', payload.studentEmail, 'payload.studentName=', payload.studentName);
   const jsonData   = JSON.stringify(payload);
 
   showProcessing(!S.autoMode);
