@@ -821,20 +821,67 @@ async function submitForm() {
 
   const url = getScriptUrl();
   if (url) {
+    // 方法1: fetch CORS で試みる
+    let sent = false;
     try {
-      const body = 'action=survey&data=' + encodeURIComponent(JSON.stringify(data));
       await fetch(url, {
         method:  'POST',
-        mode:    'no-cors',
+        mode:    'cors',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body:    body
+        body:    'action=survey&data=' + encodeURIComponent(JSON.stringify(data))
       });
-    } catch (e) {
-      console.warn('Apps Script送信エラー（予約は続行します）:', e);
+      sent = true;
+    } catch(e) {
+      console.warn('fetch failed, trying form POST:', e.message);
+    }
+
+    // 方法2: hidden form POST（必ず届く）
+    if (!sent) {
+      await sendViaHiddenForm(url, 'survey', JSON.stringify(data));
     }
   }
 
   window.location.href = 'msc-booking.html';
+}
+
+// ── Hidden form POST helper ───────────────────────────────────
+function sendViaHiddenForm(url, action, jsonData) {
+  return new Promise(function(resolve) {
+    const iframeId = 'hf-' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeId;
+    iframe.style.cssText = 'display:none;position:absolute;left:-9999px';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = iframeId;
+    form.style.display = 'none';
+
+    const fa = document.createElement('input');
+    fa.type = 'hidden'; fa.name = 'action'; fa.value = action;
+    form.appendChild(fa);
+
+    const fd = document.createElement('input');
+    fd.type = 'hidden'; fd.name = 'data'; fd.value = jsonData;
+    form.appendChild(fd);
+
+    document.body.appendChild(form);
+
+    iframe.onload = function() {
+      setTimeout(function() {
+        try { document.body.removeChild(form); document.body.removeChild(iframe); } catch(e) {}
+      }, 2000);
+      resolve();
+    };
+    setTimeout(function() {
+      try { document.body.removeChild(form); document.body.removeChild(iframe); } catch(e) {}
+      resolve();
+    }, 5000);
+
+    form.submit();
+  });
 }
 
 // ── Init ──────────────────────────────────────────────────────
