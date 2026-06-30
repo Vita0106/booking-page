@@ -399,7 +399,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  ★ 管理者設定：ここに入力してください ★
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbyB4MwwTII3lRHoiSF5t5MvWiw6sRUuWjbPU5vAfezqt26YNfduDgHtoLQgvBzVx-SKEw/exec';  // ← Apps Script の Web App URL を貼り付け
+const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbw7wJ0c9mX04ZXa0RTFAkPTbbQmXAwP6twTkjZ-67YF5sEtuqdg_Kq2klB1PJ0_-GyW3w/exec';  // ← Apps Script の Web App URL を貼り付け
 const TEACHERS_LIST = [
   // ↓ コメントを外して、実際の講師名とGmailを入力してください
   // 講師名は Code.gs の TEACHERS のキーと完全一致させること
@@ -498,11 +498,14 @@ function setupAutoMode() {
   document.getElementById('weekNav').style.display = 'none';
   document.getElementById('autoMode').style.display = 'block';
 
-  const today = new Date();
-  const minDate = new Date(today);
-  minDate.setDate(today.getDate() + EARLIEST_DAYS);
+  // JST基準で「3日後」を計算（ユーザーのローカルTZに依存しない）
+  const { y, m, d } = getJstTodayParts();
+  const minDateJst = makeJstDate(y, m, d);
+  minDateJst.setUTCDate(minDateJst.getUTCDate() + EARLIEST_DAYS);
   document.getElementById('autoDate').min =
-    minDate.getFullYear() + '-' + String(minDate.getMonth()+1).padStart(2,'0') + '-' + String(minDate.getDate()).padStart(2,'0');
+    minDateJst.getUTCFullYear() + '-' +
+    String(minDateJst.getUTCMonth()+1).padStart(2,'0') + '-' +
+    String(minDateJst.getUTCDate()).padStart(2,'0');
 
   ['autoDate','autoTimeS','autoTimeE'].forEach(id => {
     document.getElementById(id).addEventListener('change', checkAutoReady);
@@ -527,22 +530,53 @@ function checkAutoReady() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  週ナビ
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function getEarliest() {
-  const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() + EARLIEST_DAYS); return d;
+// ★ 重要: 「今日」「3日後」の計算は必ず JST（Asia/Tokyo）基準で行う。
+//   ブラウザのローカルタイムゾーン（new Date()）を使うと、
+//   ユーザーの居住地によって「今日」がズレてしまい、
+//   サーバー側（Apps Script は常に Asia/Tokyo で動作）の週計算と
+//   一致しなくなり、「空きなし」と誤表示される原因になる。
+
+// 現在時刻を JST の「年月日」として取得するヘルパー
+function getJstTodayParts() {
+  // sv-SE ロケールは 'YYYY-MM-DD HH:mm:ss' 形式で返るため分解しやすい
+  const s = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' });
+  const [datePart] = s.split(' ');
+  const [y, m, d] = datePart.split('-').map(Number);
+  return { y, m, d };
 }
+
+// JST基準の「年月日」から、ローカル環境に依存しない Date オブジェクトを作る
+// （UTC正午を使うことで日付の前後ズレを防ぐ。週計算には時刻部分は使わないため安全）
+function makeJstDate(y, m, d) {
+  return new Date(Date.UTC(y, m - 1, d, 3, 0, 0)); // JST 正午 = UTC 03:00
+}
+
+function getEarliest() {
+  const { y, m, d } = getJstTodayParts();
+  const base = makeJstDate(y, m, d);
+  base.setUTCDate(base.getUTCDate() + EARLIEST_DAYS);
+  return base;
+}
+
 function getWeekRange() {
-  const base = S.wo === 0 ? getEarliest() : new Date();
-  base.setHours(0,0,0,0);
+  const { y, m, d } = getJstTodayParts();
+  const todayJst = makeJstDate(y, m, d);
+  const base = S.wo === 0 ? getEarliest() : todayJst;
+
+  // JST基準の曜日（UTC日付だが時刻をJST正午にしているため曜日は正しい）
+  const dow = base.getUTCDay(); // 0=Sun..6=Sat
   const mon = new Date(base);
-  mon.setDate(base.getDate() - ((base.getDay()+6)%7) + S.wo*7);
-  const sun = new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+  mon.setUTCDate(base.getUTCDate() - ((dow + 6) % 7) + S.wo * 7);
+  const sun = new Date(mon);
+  sun.setUTCDate(mon.getUTCDate() + 6);
   return { start: mon, end: sun };
 }
 function updWLbl() {
   const { start: s } = getWeekRange();
-  const e = new Date(s); e.setDate(s.getDate()+6);
-  const f = d => `${d.getMonth()+1}/${d.getDate()}`;
-  document.getElementById('wLbl').textContent = `${s.getFullYear()}年 ${f(s)}（月）〜 ${f(e)}（日）`;
+  const e = new Date(s); e.setUTCDate(s.getUTCDate()+6);
+  // UTC基準のDateオブジェクトなので getUTC* を使う（ローカルTZでの日付ズレ防止）
+  const f = d => `${d.getUTCMonth()+1}/${d.getUTCDate()}`;
+  document.getElementById('wLbl').textContent = `${s.getUTCFullYear()}年 ${f(s)}（月）〜 ${f(e)}（日）`;
   document.getElementById('prevBtn').disabled = S.wo <= 0;
 }
 function shiftW(d) {
@@ -610,18 +644,23 @@ function renderCal(slots, weekStart) {
   const localDate = dt => dt.toLocaleString('sv-SE',{timeZone:userTz}).slice(0,10);
   const localTime = dt => dt.toLocaleString('sv-SE',{timeZone:userTz}).slice(11,16);
 
+  // weekStart は UTC基準（JST正午）の Date なので、UTC系メソッドで日付計算する。
+  // ローカルTZ依存の getDate()/setDate() を使うと、西半球など特定のタイムゾーンで
+  // 表示上の日付が前後にずれてしまう。
   let html = '<div class="cgrid">';
   for (let d = 0; d < 7; d++) {
-    const day      = new Date(weekStart); day.setDate(weekStart.getDate()+d);
-    const isToday  = localDate(day) === localDate(now);
+    const day = new Date(weekStart);
+    day.setUTCDate(weekStart.getUTCDate() + d);
+
+    const isToday   = localDate(day) === localDate(now);
     const isTooSoon = day < earliest;
-    const isPast   = day < now && !isToday;
-    const dayKey   = localDate(day);
-    const ds       = slots.filter(sl => localDate(sl._s) === dayKey);
+    const isPast    = day < now && !isToday;
+    const dayKey    = localDate(day);
+    const ds        = slots.filter(sl => localDate(sl._s) === dayKey);
 
     html += `<div class="ccol">
       <div class="cdh">${days[d]}</div>
-      <div class="cdd${isToday?' today':''}">${day.getDate()}</div>`;
+      <div class="cdd${isToday?' today':''}">${day.getUTCDate()}</div>`;
 
     if (isPast || isTooSoon) {
       html += '<div class="nos">—</div>';
