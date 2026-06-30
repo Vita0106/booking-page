@@ -799,7 +799,7 @@ function collectData() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  ★ Apps Script URL（管理者が設定）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const SCRIPT_URL_INDEX = 'https://script.google.com/macros/s/AKfycbyVwBQpU3neg-s04L4M90W5Dn8jIKyDaImLO2tacMAgm5mloNfMCqWX6SnSIXJUC1PFzA/exec';  // ← Apps Script の Web App URL を貼り付け
+const SCRIPT_URL_INDEX = 'https://script.google.com/macros/s/AKfycbw7wJ0c9mX04ZXa0RTFAkPTbbQmXAwP6twTkjZ-67YF5sEtuqdg_Kq2klB1PJ0_-GyW3w/exec';  // ← Apps Script の Web App URL を貼り付け
 
 function getScriptUrl() {
   if (SCRIPT_URL_INDEX) return SCRIPT_URL_INDEX;
@@ -818,6 +818,8 @@ async function submitForm() {
   const data = collectData();
 
   sessionStorage.setItem('mandstar_form', JSON.stringify(data));
+  // バックアップ: msc-booking.htmlがsessionStorageを読めない場合のため
+  localStorage.setItem('mandstar_form_backup', JSON.stringify(data));
 
   const url = getScriptUrl();
   if (url) {
