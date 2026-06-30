@@ -399,7 +399,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  ★ 管理者設定：ここに入力してください ★
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbzjPAvzqyiwZbNaU-MZjeEynnGb_bph6G0i88IO6R0wV05e7kEr8T33_jzQketEv76FNQ/exec';  // ← Apps Script の Web App URL を貼り付け
+const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbyVwBQpU3neg-s04L4M90W5Dn8jIKyDaImLO2tacMAgm5mloNfMCqWX6SnSIXJUC1PFzA/exec';  // ← Apps Script の Web App URL を貼り付け
 const TEACHERS_LIST = [
   // ↓ コメントを外して、実際の講師名とGmailを入力してください
   // 講師名は Code.gs の TEACHERS のキーと完全一致させること
@@ -684,48 +684,56 @@ async function doBook() {
   //  2. 失敗したら hidden form POST (CORS回避・確実に届く)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const actionName = S.autoMode ? 'auto_booking' : 'booking';
-  console.log('[MandStar] payload.studentEmail=', payload.studentEmail, 'payload.studentName=', payload.studentName);
-  const jsonData   = JSON.stringify(payload);
+  console.log('[MandStar] booking:', actionName, 'email=', payload.studentEmail);
 
   showProcessing(!S.autoMode);
   setStep(1, 'active');
   await new Promise(r => setTimeout(r, 300));
-  setStep(1, 'done'); setStep(2, 'active');
 
-  // ── 方法1: fetch で試みる（レスポンスが読める） ──
-  let sent = false;
+  // ── STEP1: Sheets記録 + カレンダー + 講師通知 (POST) ─────────
+  // no-cors + text/plain でプリフライトなし送信
   try {
-    const res = await fetch(cfg.url, {
-      method: 'POST',
-      mode:   'cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body:   'action=' + actionName + '&data=' + encodeURIComponent(jsonData)
+    await fetch(cfg.url, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify({ action: actionName, data: payload })
     });
-    const result = await res.json();
-    if (result.status === 'error' && result.message === 'already_booked') {
-      hideProcessing();
-      alert('この時間帯はすでに予約済みです。別の時間帯を選択してください。');
-      btn.disabled = false;
-      return;
-    }
-    sent = true;
-    Logger.log && Logger.log('Sent via fetch CORS');
-  } catch (fetchErr) {
-    console.warn('fetch CORS failed, trying form POST:', fetchErr.message);
-  }
+    console.log('[MandStar] POST sent');
+  } catch(e) { console.warn('[MandStar] POST err:', e.message); }
 
-  // ── 方法2: hidden form POST（必ず Apps Script に届く） ──
-  if (!sent) {
-    await sendViaForm(cfg.url, actionName, jsonData);
-    sent = true;
-    // form POST の場合レスポンスは読めないが送信は確実
-    await new Promise(r => setTimeout(r, 1500)); // Apps Script 処理待ち
+  setStep(1, 'done'); setStep(2, 'active');
+  // Apps Script 処理待ち（2秒）
+  await new Promise(r => setTimeout(r, 2000));
+
+  // ── STEP2: 学生へ確認メール送信 (GET) ────────────────────────
+  // GETリクエストはCORSの制限を受けず、レスポンスも読める
+  if (!S.autoMode && payload.studentEmail) {
+    try {
+      const params = new URLSearchParams({
+        action:       'send_confirm',
+        studentEmail: payload.studentEmail,
+        studentName:  payload.studentName  || '',
+        teacherName:  payload.teacherName  || '',
+        startTime:    payload.startTime    || '',
+        endTime:      payload.endTime      || '',
+        timezone:     payload.timezone     || 'Asia/Tokyo'
+      });
+      const res    = await fetch(cfg.url + '?' + params.toString());
+      const result = await res.json();
+      console.log('[MandStar] send_confirm result:', result.status);
+      if (result.status === 'error') {
+        console.error('[MandStar] confirm mail error:', result.message);
+      }
+    } catch(e) {
+      console.error('[MandStar] send_confirm fetch err:', e.message);
+    }
   }
 
   setStep(2, 'done'); setStep(3, 'active');
-  await new Promise(r => setTimeout(r, 600));
+  await new Promise(r => setTimeout(r, 500));
   setStep(3, 'done');
-  await new Promise(r => setTimeout(r, 300));
+  await new Promise(r => setTimeout(r, 200));
   hideProcessing();
   showSuccess(t);
 }
